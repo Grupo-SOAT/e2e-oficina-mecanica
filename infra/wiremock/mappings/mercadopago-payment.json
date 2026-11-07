@@ -1,0 +1,16 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/v1/payments/.*"
+  },
+  "response": {
+    "status": 200,
+    "headers": { "Content-Type": "application/json" },
+    "jsonBody": {
+      "id": 1001,
+      "status": "approved",
+      "status_detail": "accredited",
+      "external_reference": "1"
+    }
+  }
+}

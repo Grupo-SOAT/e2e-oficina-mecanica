@@ -1,0 +1,16 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPathPattern": "/v1/payments/.*/refunds"
+  },
+  "response": {
+    "status": 201,
+    "headers": { "Content-Type": "application/json" },
+    "jsonBody": {
+      "id": 2001,
+      "payment_id": 1001,
+      "status": "approved",
+      "amount": 100.00
+    }
+  }
+}
