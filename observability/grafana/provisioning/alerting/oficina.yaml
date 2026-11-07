@@ -1,0 +1,81 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: oficina-fleet
+    folder: Oficina
+    interval: 1m
+    rules:
+      - uid: oficina-failed-requests
+        title: Oficina failed requests
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: sum(rate(traces_service_graph_request_failed_total[5m])) by (server)
+              instant: true
+              intervalMs: 1000
+              legendFormat: "{{server}}"
+              range: false
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: { params: [0], type: gt }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { type: last }
+                  type: query
+              expression: A
+              refId: C
+              type: threshold
+        noDataState: NoData
+        execErrState: Error
+        for: 1m
+        labels:
+          severity: warning
+          service: oficina
+        annotations:
+          summary: "Requests failing between services"
+          description: "One or more workshop services reported failed requests in the last 5 minutes."
+
+      - uid: oficina-no-traffic
+        title: Oficina no traffic
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: sum(increase(traces_service_graph_request_total[10m]))
+              instant: true
+              intervalMs: 1000
+              legendFormat: "fleet"
+              range: false
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: { params: [0], type: lt }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { type: last }
+                  type: query
+              expression: A
+              refId: C
+              type: threshold
+        noDataState: Alerting
+        execErrState: Error
+        for: 5m
+        labels:
+          severity: warning
+          service: oficina
+        annotations:
+          summary: "No workshop traffic"
+          description: "No request spans were observed across the fleet in the last 10 minutes."

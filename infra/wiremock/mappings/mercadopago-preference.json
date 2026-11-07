@@ -1,0 +1,15 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPath": "/checkout/preferences"
+  },
+  "response": {
+    "status": 201,
+    "headers": { "Content-Type": "application/json" },
+    "jsonBody": {
+      "id": "pref-local-1",
+      "init_point": "http://localhost:8089/checkout/v1/redirect?pref_id=pref-local-1",
+      "sandbox_init_point": "http://localhost:8089/checkout/v1/redirect?pref_id=pref-local-1"
+    }
+  }
+}
