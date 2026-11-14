@@ -1,20 +1,57 @@
 services:
-  postgres:
-    mem_limit: 384m
-    memswap_limit: 384m
+  postgres-mnl:
+    mem_limit: 256m
+    memswap_limit: 256m
     image: postgres:16
-    container_name: oficina-postgres
+    container_name: oficina-postgres-mnl
     environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: oficina_mnl
+      POSTGRES_USER: mnl
+      POSTGRES_PASSWORD: mnl
     ports:
-      - "5432:5432"
+      - "${POSTGRES_MNL_PORT:-5432}:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+      - postgres-mnl-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d postgres"]
+      test: ["CMD-SHELL", "pg_isready -U mnl -d oficina_mnl"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  postgres-pedidos:
+    mem_limit: 256m
+    memswap_limit: 256m
+    image: postgres:16
+    container_name: oficina-postgres-pedidos
+    environment:
+      POSTGRES_DB: oficina_ms_pedidos
+      POSTGRES_USER: ms_pedidos
+      POSTGRES_PASSWORD: ms_pedidos
+    ports:
+      - "${POSTGRES_PEDIDOS_PORT:-5434}:5432"
+    volumes:
+      - postgres-pedidos-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ms_pedidos -d oficina_ms_pedidos"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  postgres-orcamentos:
+    mem_limit: 256m
+    memswap_limit: 256m
+    image: postgres:16
+    container_name: oficina-postgres-orcamentos
+    environment:
+      POSTGRES_DB: oficina_ms_orcamentos
+      POSTGRES_USER: ms_orcamentos
+      POSTGRES_PASSWORD: ms_orcamentos
+    ports:
+      - "${POSTGRES_ORCAMENTOS_PORT:-5435}:5432"
+    volumes:
+      - postgres-orcamentos-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ms_orcamentos -d oficina_ms_orcamentos"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -141,7 +178,7 @@ services:
     environment:
       JAVA_TOOL_OPTIONS: "-javaagent:/otel/opentelemetry-javaagent.jar -Xms192m -Xmx384m"
       SPRING_PROFILES_ACTIVE: local
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/oficina_mnl
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-mnl:5432/oficina_mnl
       SPRING_DATASOURCE_USERNAME: mnl
       SPRING_DATASOURCE_PASSWORD: mnl
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
@@ -159,7 +196,7 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      postgres:
+      postgres-mnl:
         condition: service_healthy
       kafka:
         condition: service_healthy
@@ -175,7 +212,7 @@ services:
     container_name: oficina-ms-orcamentos
     environment:
       JAVA_TOOL_OPTIONS: "-javaagent:/otel/opentelemetry-javaagent.jar -Xms96m -Xmx192m"
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/oficina_ms_orcamentos
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-orcamentos:5432/oficina_ms_orcamentos
       SPRING_DATASOURCE_USERNAME: ms_orcamentos
       SPRING_DATASOURCE_PASSWORD: ms_orcamentos
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
@@ -202,7 +239,7 @@ services:
     ports:
       - "8081:8081"
     depends_on:
-      postgres:
+      postgres-orcamentos:
         condition: service_healthy
       kafka:
         condition: service_healthy
@@ -220,7 +257,7 @@ services:
     container_name: oficina-ms-pedidos
     environment:
       JAVA_TOOL_OPTIONS: "-javaagent:/otel/opentelemetry-javaagent.jar -Xms96m -Xmx192m"
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/oficina_ms_pedidos
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-pedidos:5432/oficina_ms_pedidos
       SPRING_DATASOURCE_USERNAME: ms_pedidos
       SPRING_DATASOURCE_PASSWORD: ms_pedidos
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
@@ -240,7 +277,7 @@ services:
     ports:
       - "8082:8082"
     depends_on:
-      postgres:
+      postgres-pedidos:
         condition: service_healthy
       kafka:
         condition: service_healthy
@@ -282,6 +319,8 @@ services:
         condition: service_started
 
 volumes:
-  postgres-data:
+  postgres-mnl-data:
+  postgres-pedidos-data:
+  postgres-orcamentos-data:
   dynamodb-data:
   observability-data:

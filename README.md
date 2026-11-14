@@ -16,6 +16,9 @@ Services:
 | `ms-orcamentos` | 8081 |
 | `ms-pedidos` | 8082 |
 | `ms-expedicao` | 8083 |
+| `postgres-mnl` | 5432 |
+| `postgres-pedidos` | 5434 |
+| `postgres-orcamentos` | 5435 |
 | Grafana (OTel-LGTM) | 3000 |
 | Prometheus | 9090 |
 | Tempo | 3200 |
@@ -47,9 +50,11 @@ scenario (part of the full suite, excluded from smoke).
 ./mvnw verify -Dcucumber.filter.tags="@smoke"
 ```
 
-Data isolation: the suite truncates the service tables and re-applies the
-canonical seed before each scenario. For a deterministic run start from empty
-volumes:
+Data isolation: each service has its own PostgreSQL container
+(`postgres-mnl`, `postgres-pedidos`, `postgres-orcamentos`), so no service
+receives credentials for another service's database. The suite truncates each
+service's tables and re-applies the canonical seed before every scenario. For a
+deterministic run start from empty volumes:
 
 ```bash
 docker compose down -v
@@ -68,7 +73,7 @@ Actions runner:
 
 | Container | Limit |
 |---|---|
-| postgres | 384 MB |
+| postgres-mnl / postgres-pedidos / postgres-orcamentos | 256 MB cada |
 | kafka | 768 MB (256 MB heap) |
 | dynamodb | 256 MB |
 | mailpit | 96 MB |

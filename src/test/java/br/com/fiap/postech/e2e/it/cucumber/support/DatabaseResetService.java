@@ -82,7 +82,7 @@ public final class DatabaseResetService {
     }
 
     public static String pedidosUrl() {
-        return env("E2E_PEDIDOS_DB_URL", "jdbc:postgresql://localhost:5432/oficina_ms_pedidos");
+        return env("E2E_PEDIDOS_DB_URL", "jdbc:postgresql://localhost:5434/oficina_ms_pedidos");
     }
 
     public static String pedidosUser() {
@@ -94,7 +94,7 @@ public final class DatabaseResetService {
     }
 
     public static String orcamentosUrl() {
-        return env("E2E_ORCAMENTOS_DB_URL", "jdbc:postgresql://localhost:5432/oficina_ms_orcamentos");
+        return env("E2E_ORCAMENTOS_DB_URL", "jdbc:postgresql://localhost:5435/oficina_ms_orcamentos");
     }
 
     public static String orcamentosUser() {
