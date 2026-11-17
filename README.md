@@ -1,16 +1,16 @@
 # e2e-oficina-mecanica
 
-Local fleet and end-to-end suite for the workshop platform.
+Frota local e suíte end-to-end da plataforma da oficina mecânica.
 
-## Fleet
+## Frota
 
 ```bash
 docker compose up -d --build
 ```
 
-Services:
+Serviços:
 
-| Service | Port |
+| Serviço | Porta |
 |---|---|
 | `mnl-oficina-mecanica` | 8080 |
 | `ms-orcamentos` | 8081 |
@@ -32,29 +32,29 @@ docker compose up -d --build
 ./mvnw verify
 ```
 
-The Cucumber suite talks to the fleet over HTTP and Kafka. It covers:
+A suíte Cucumber conversa com a frota por HTTP e Kafka. Ela cobre:
 
-1. Authentication and role authorization in `mnl`.
-2. Owners, vehicles, users, catalog services and supplies CRUD.
-3. Service order lifecycle, cascade creation and service lines in `ms-pedidos`.
-4. Budget pricing/audit and `BUDGET_REQUESTED`/`BUDGET_CREATED`.
-5. Checkout Pro, payment webhook, rejection, idempotent refund and `@slow` timeout.
-6. Execution queue enqueue/start/complete and cancellation.
-7. Reporting PDF/CSV through `mnl` reading `ms-pedidos`.
-8. Correlation id, Prometheus metrics, Tempo traces and Grafana provisioning.
+1. Autenticação e autorização por papel no `mnl`.
+2. CRUD de clientes, veículos, usuários, serviços de catálogo e insumos.
+3. Ciclo de vida da ordem de serviço, criação em cascata e linhas de serviço no `ms-pedidos`.
+4. Precificação/auditoria do orçamento e `BUDGET_REQUESTED`/`BUDGET_CREATED`.
+5. Checkout Pro, webhook de pagamento, rejeição, reembolso idempotente e timeout `@slow`.
+6. Enfileiramento, início, conclusão e cancelamento na fila de execução.
+7. Relatórios PDF/CSV via `mnl` lendo do `ms-pedidos`.
+8. Correlation id, métricas Prometheus, traces Tempo e provisionamento Grafana.
 
-Tags: `@smoke` for the fast authentication path, `@slow` for the payment timeout
-scenario (part of the full suite, excluded from smoke).
+Tags: `@smoke` para o caminho rápido de autenticação, `@slow` para o cenário de
+timeout de pagamento (faz parte da suíte completa, excluído do smoke).
 
 ```bash
 ./mvnw verify -Dcucumber.filter.tags="@smoke"
 ```
 
-Data isolation: each service has its own PostgreSQL container
-(`postgres-mnl`, `postgres-pedidos`, `postgres-orcamentos`), so no service
-receives credentials for another service's database. The suite truncates each
-service's tables and re-applies the canonical seed before every scenario. For a
-deterministic run start from empty volumes:
+Isolamento de dados: cada serviço tem seu próprio container PostgreSQL
+(`postgres-mnl`, `postgres-pedidos`, `postgres-orcamentos`), então nenhum serviço
+recebe credenciais do banco de outro serviço. A suíte trunca as tabelas de cada
+serviço e reaplica o seed canônico antes de cada cenário. Para uma execução
+determinística, comece com volumes vazios:
 
 ```bash
 docker compose down -v
@@ -62,32 +62,37 @@ docker compose up -d --build
 ./mvnw verify
 ```
 
-Flyway is a test-scope dependency and applies only the seed
-(`src/test/resources/db/e2e/migration`); the services still own their schema.
-No business stub: only Mercado Pago is simulated by WireMock, behind the real ACL.
+Flyway é uma dependência de escopo de teste e aplica apenas o seed
+(`src/test/resources/db/e2e/migration`); os serviços continuam donos do próprio
+schema. Sem stub de negócio: apenas o Mercado Pago é simulado pelo WireMock, atrás
+da ACL real.
 
-## Resource limits
+## Limites de recursos
 
-The compose file caps every container to keep the fleet runnable on a GitHub
-Actions runner:
+O compose limita cada container para manter a frota executável em um runner do
+GitHub Actions:
 
-| Container | Limit |
+| Container | Limite |
 |---|---|
 | postgres-mnl / postgres-pedidos / postgres-orcamentos | 256 MB cada |
-| kafka | 768 MB (256 MB heap) |
+| kafka | 768 MB (256 MB de heap) |
 | dynamodb | 256 MB |
 | mailpit | 96 MB |
 | mercadopago | 256 MB |
 | dynamodb-init | 128 MB |
-| observability (LGTM) | 1 GB |
-| mnl | 768 MB (384 MB heap) |
-| ms-orcamentos / ms-pedidos / ms-expedicao | 448 MB each (192 MB heap) |
+| observability (LGTM) | 2 GB |
+| mnl | 768 MB (384 MB de heap) |
+| ms-orcamentos / ms-pedidos / ms-expedicao | 448 MB cada (192 MB de heap) |
 
-## Grafana provisioning
+O `observability` usa 2 GB para absorver a ingestão de traces da suíte completa
+sem estourar a memória e derrubar Grafana/Tempo.
 
-- Dashboard `Oficina — Fleet Overview` (`uid=oficina-fleet`): request rate, failed requests,
-  p95 latency, traces by service and a Tempo trace-search panel.
-- Alert rules `oficina-failed-requests` and `oficina-no-traffic` in the `Oficina` folder.
-- Provisioned from `observability/grafana/` and asserted by the Cucumber
-  `observability.feature`, including a check that the cascade trace is queryable
-  in Tempo and spans all four services.
+## Provisionamento do Grafana
+
+- Dashboard `Oficina — Fleet Overview` (`uid=oficina-fleet`): taxa de requisições,
+  requisições com falha, latência p95, traces por serviço e um painel de busca de
+  traces do Tempo.
+- Regras de alerta `oficina-failed-requests` e `oficina-no-traffic` na pasta `Oficina`.
+- Provisionados a partir de `observability/grafana/` e verificados pela feature
+  Cucumber `observability.feature`, incluindo a checagem de que o trace da cascata
+  é consultável no Tempo e abrange os quatro serviços.
